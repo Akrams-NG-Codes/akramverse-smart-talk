@@ -1,3 +1,4 @@
+
 import type { Config } from "tailwindcss";
 
 export default {
@@ -52,15 +53,19 @@ export default {
 					DEFAULT: 'hsl(var(--card))',
 					foreground: 'hsl(var(--card-foreground))'
 				},
-				sidebar: {
-					DEFAULT: 'hsl(var(--sidebar-background))',
-					foreground: 'hsl(var(--sidebar-foreground))',
-					primary: 'hsl(var(--sidebar-primary))',
-					'primary-foreground': 'hsl(var(--sidebar-primary-foreground))',
-					accent: 'hsl(var(--sidebar-accent))',
-					'accent-foreground': 'hsl(var(--sidebar-accent-foreground))',
-					border: 'hsl(var(--sidebar-border))',
-					ring: 'hsl(var(--sidebar-ring))'
+				
+				// AkramVerse custom colors
+				akram: {
+					purple: {
+						light: '#9B87F5',
+						DEFAULT: '#7E69AB',
+						dark: '#6E59A5'
+					},
+					blue: {
+						light: '#D3E4FD',
+						DEFAULT: '#0EA5E9',
+						dark: '#0284C7'
+					}
 				}
 			},
 			borderRadius: {
@@ -84,11 +89,26 @@ export default {
 					to: {
 						height: '0'
 					}
+				},
+				'pulse-slow': {
+					'0%, 100%': { opacity: '1' },
+					'50%': { opacity: '0.5' },
+				},
+				'fade-in': {
+					'0%': { opacity: '0' },
+					'100%': { opacity: '1' },
+				},
+				'bounce-right': {
+					'0%, 100%': { transform: 'translateX(0)' },
+					'50%': { transform: 'translateX(5px)' },
 				}
 			},
 			animation: {
 				'accordion-down': 'accordion-down 0.2s ease-out',
-				'accordion-up': 'accordion-up 0.2s ease-out'
+				'accordion-up': 'accordion-up 0.2s ease-out',
+				'pulse-slow': 'pulse-slow 2s infinite',
+				'fade-in': 'fade-in 0.5s ease-out',
+				'bounce-right': 'bounce-right 1s infinite',
 			}
 		}
 	},

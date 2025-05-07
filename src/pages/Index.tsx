@@ -1,11 +1,21 @@
-// Update this page (the content is just a fallback if you fail to update the page)
 
+import { useNavigate } from "react-router-dom";
+import { useEffect } from "react";
+
+// This is our index page that will redirect to the landing page
 const Index = () => {
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    // Redirect to the landing page
+    navigate("/");
+  }, [navigate]);
+
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-100">
+    <div className="flex items-center justify-center min-h-screen">
       <div className="text-center">
-        <h1 className="text-4xl font-bold mb-4">Welcome to Your Blank App</h1>
-        <p className="text-xl text-gray-600">Start building your amazing project here!</p>
+        <h1 className="text-2xl font-bold mb-4">Loading AkramVerse...</h1>
+        <div className="animate-pulse bg-akram-purple h-1 w-64 mx-auto rounded"></div>
       </div>
     </div>
   );
