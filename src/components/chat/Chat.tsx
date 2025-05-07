@@ -1,24 +1,94 @@
 
 import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import ChatHeader, { ChatMode } from "./ChatHeader";
 import ChatHistory from "./ChatHistory";
 import ChatInput from "./ChatInput";
 import { ChatMessageProps } from "./ChatMessage";
 import { useToast } from "@/components/ui/use-toast";
-import OpenAI from "openai";
-
-// Initialize OpenAI client
-// Note: In production, this key should be stored securely in environment variables
-const openai = new OpenAI({
-  apiKey: "YOUR_OPENAI_API_KEY", // Replace with your OpenAI API key
-  dangerouslyAllowBrowser: true // Only for demo purposes
-});
+import { supabase } from "@/integrations/supabase/client";
+import { v4 as uuidv4 } from "uuid";
 
 export default function Chat() {
   const [messages, setMessages] = useState<ChatMessageProps[]>([]);
   const [mode, setMode] = useState<ChatMode>("tutor");
   const [isLoading, setIsLoading] = useState(false);
+  const [sessionId, setSessionId] = useState<string | null>(null);
   const { toast } = useToast();
+  const navigate = useNavigate();
+
+  // Check if user is authenticated
+  useEffect(() => {
+    const checkAuth = async () => {
+      const { data, error } = await supabase.auth.getSession();
+      
+      if (error || !data.session) {
+        toast({
+          title: "Authentication required",
+          description: "Please sign in to use the chat feature.",
+          variant: "destructive"
+        });
+        navigate('/login');
+      } else {
+        // Create or get an existing session
+        await createOrGetSession();
+      }
+    };
+    
+    checkAuth();
+  }, []);
+  
+  // Create or get a chat session
+  const createOrGetSession = async () => {
+    const { data: session } = await supabase.auth.getSession();
+    
+    if (session?.session) {
+      // First check for existing sessions
+      const { data: existingSessions } = await supabase
+        .from('chat_sessions')
+        .select('id')
+        .eq('user_id', session.session.user.id)
+        .order('created_at', { ascending: false })
+        .limit(1);
+        
+      if (existingSessions && existingSessions.length > 0) {
+        const sessionId = existingSessions[0].id;
+        setSessionId(sessionId);
+        
+        // Load existing messages
+        const { data: existingMessages } = await supabase
+          .from('messages')
+          .select('*')
+          .eq('session_id', sessionId)
+          .order('timestamp', { ascending: true });
+          
+        if (existingMessages && existingMessages.length > 0) {
+          setMessages(existingMessages.map(msg => ({
+            role: msg.role as "user" | "assistant",
+            content: msg.content,
+            timestamp: msg.timestamp
+          })));
+        }
+      } else {
+        // Create a new session
+        const newSessionId = uuidv4();
+        
+        const { error } = await supabase
+          .from('chat_sessions')
+          .insert({
+            id: newSessionId,
+            user_id: session.session.user.id,
+            mode
+          });
+          
+        if (!error) {
+          setSessionId(newSessionId);
+        } else {
+          console.error("Error creating session:", error);
+        }
+      }
+    }
+  };
 
   const handleSendMessage = async (message: string) => {
     // Add user message to chat
@@ -32,37 +102,66 @@ export default function Chat() {
     setIsLoading(true);
     
     try {
-      // Get system prompt based on the selected mode
-      const systemPrompt = getSystemPromptForMode(mode);
+      // Get current session
+      const { data: session } = await supabase.auth.getSession();
       
+      if (!session?.session?.access_token || !sessionId) {
+        toast({
+          title: "Session error",
+          description: "Your session has expired. Please sign in again.",
+          variant: "destructive"
+        });
+        navigate('/login');
+        return;
+      }
+
+      // Save user message to database
+      await supabase
+        .from('messages')
+        .insert({
+          session_id: sessionId,
+          user_id: session.session.user.id,
+          content: message,
+          role: 'user',
+          timestamp: new Date().toISOString()
+        });
+
       // Create conversation history for OpenAI
       const conversationHistory = messages.map(msg => ({
-        role: msg.role === "assistant" ? "assistant" as const : "user" as const,
+        role: msg.role,
         content: msg.content
       }));
       
-      // Add the system message at the beginning
-      conversationHistory.unshift({
-        role: "system" as const,
-        content: systemPrompt
-      });
-      
       // Add the new user message
       conversationHistory.push({
-        role: "user" as const,
+        role: "user",
         content: message
       });
       
-      // Call OpenAI API
-      const completion = await openai.chat.completions.create({
-        model: "gpt-4o", // You can use "gpt-3.5-turbo" for a more cost-effective option
-        messages: conversationHistory,
-        temperature: 0.7,
-        max_tokens: 800,
-      });
+      // Call our Supabase Edge Function
+      const response = await fetch(
+        `https://nakuynzcpxgvrpxqistm.supabase.co/functions/v1/chat`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${session.session.access_token}`
+          },
+          body: JSON.stringify({
+            messages: conversationHistory,
+            mode
+          }),
+        }
+      );
+      
+      const result = await response.json();
+      
+      if (!response.ok) {
+        throw new Error(result.error || "Failed to get AI response");
+      }
       
       // Extract the AI response
-      const aiResponse = completion.choices[0]?.message?.content || "I'm sorry, I couldn't generate a response.";
+      const aiResponse = result.response;
       
       // Add AI response to chat
       const aiMessage: ChatMessageProps = {
@@ -72,8 +171,20 @@ export default function Chat() {
       };
       
       setMessages(prev => [...prev, aiMessage]);
+      
+      // Save AI message to database
+      await supabase
+        .from('messages')
+        .insert({
+          session_id: sessionId,
+          user_id: session.session.user.id,
+          content: aiResponse,
+          role: 'assistant',
+          timestamp: new Date().toISOString()
+        });
+        
     } catch (error) {
-      console.error("OpenAI API error:", error);
+      console.error("API error:", error);
       toast({
         title: "Error",
         description: "Failed to get a response from the AI. Please try again.",
@@ -84,23 +195,16 @@ export default function Chat() {
     }
   };
   
-  const getSystemPromptForMode = (mode: ChatMode): string => {
-    switch (mode) {
-      case "tutor":
-        return "You are an expert tutor assistant. Explain concepts in detail with examples. Be educational, patient, and encouraging.";
-      case "writer":
-        return "You are a professional content writer assistant. Help create engaging, well-structured content. Provide creative suggestions and refinements.";
-      case "developer":
-        return "You are an experienced developer assistant. Provide code explanations, debugging help, and programming advice with code examples when relevant.";
-      case "support":
-        return "You are a friendly customer support assistant. Be helpful, empathetic, and solution-oriented when addressing user concerns.";
-      default:
-        return "You are a helpful assistant.";
-    }
-  };
-  
-  const handleModeChange = (newMode: ChatMode) => {
+  const handleModeChange = async (newMode: ChatMode) => {
     setMode(newMode);
+    
+    // Update session mode in database
+    if (sessionId) {
+      await supabase
+        .from('chat_sessions')
+        .update({ mode: newMode })
+        .eq('id', sessionId);
+    }
     
     // Add system message about mode change
     const systemMessage: ChatMessageProps = {

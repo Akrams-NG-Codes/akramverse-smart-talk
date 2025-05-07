@@ -1,8 +1,53 @@
 
-import { useState, FormEvent, useEffect } from "react";
+import { useState, FormEvent, useEffect, useRef } from "react";
 import { Mic, MicOff, Send } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
+
+// Add Speech Recognition type definitions
+interface SpeechRecognition extends EventTarget {
+  continuous: boolean;
+  interimResults: boolean;
+  lang: string;
+  start(): void;
+  stop(): void;
+  onresult: (event: SpeechRecognitionEvent) => void;
+  onend: () => void;
+  onerror: (event: any) => void;
+}
+
+interface SpeechRecognitionEvent {
+  results: SpeechRecognitionResultList;
+}
+
+interface SpeechRecognitionResultList {
+  length: number;
+  item(index: number): SpeechRecognitionResult;
+  [index: number]: SpeechRecognitionResult;
+}
+
+interface SpeechRecognitionResult {
+  isFinal: boolean;
+  length: number;
+  item(index: number): SpeechRecognitionAlternative;
+  [index: number]: SpeechRecognitionAlternative;
+}
+
+interface SpeechRecognitionAlternative {
+  confidence: number;
+  transcript: string;
+}
+
+interface SpeechRecognitionConstructor {
+  new (): SpeechRecognition;
+}
+
+declare global {
+  interface Window {
+    SpeechRecognition?: SpeechRecognitionConstructor;
+    webkitSpeechRecognition?: SpeechRecognitionConstructor;
+  }
+}
 
 interface ChatInputProps {
   onSend: (message: string) => void;
@@ -12,22 +57,21 @@ interface ChatInputProps {
 export default function ChatInput({ onSend, isLoading = false }: ChatInputProps) {
   const [message, setMessage] = useState("");
   const [isRecording, setIsRecording] = useState(false);
-  const [recognition, setRecognition] = useState<SpeechRecognition | null>(null);
+  const recognitionRef = useRef<SpeechRecognition | null>(null);
   
   // Initialize speech recognition
   useEffect(() => {
-    if ('SpeechRecognition' in window || 'webkitSpeechRecognition' in window) {
-      const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    
+    if (SpeechRecognition) {
       const recognitionInstance = new SpeechRecognition();
       
       recognitionInstance.continuous = true;
       recognitionInstance.interimResults = true;
       
       recognitionInstance.onresult = (event) => {
-        const transcript = Array.from(event.results)
-          .map(result => result[0])
-          .map(result => result.transcript)
-          .join('');
+        const lastResult = event.results[event.results.length - 1];
+        const transcript = lastResult[0].transcript;
           
         setMessage(transcript);
       };
@@ -36,8 +80,14 @@ export default function ChatInput({ onSend, isLoading = false }: ChatInputProps)
         setIsRecording(false);
       };
       
-      setRecognition(recognitionInstance);
+      recognitionRef.current = recognitionInstance;
     }
+    
+    return () => {
+      if (recognitionRef.current && isRecording) {
+        recognitionRef.current.stop();
+      }
+    };
   }, []);
   
   const handleSubmit = (e: FormEvent) => {
@@ -56,16 +106,16 @@ export default function ChatInput({ onSend, isLoading = false }: ChatInputProps)
   };
   
   const toggleRecording = () => {
-    if (!recognition) {
+    if (!recognitionRef.current) {
       alert("Speech recognition is not supported in your browser.");
       return;
     }
     
     if (isRecording) {
-      recognition.stop();
+      recognitionRef.current.stop();
       setIsRecording(false);
     } else {
-      recognition.start();
+      recognitionRef.current.start();
       setIsRecording(true);
     }
   };
