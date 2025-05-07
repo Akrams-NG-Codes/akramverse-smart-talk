@@ -5,6 +5,14 @@ import ChatHistory from "./ChatHistory";
 import ChatInput from "./ChatInput";
 import { ChatMessageProps } from "./ChatMessage";
 import { useToast } from "@/components/ui/use-toast";
+import OpenAI from "openai";
+
+// Initialize OpenAI client
+// Note: In production, this key should be stored securely in environment variables
+const openai = new OpenAI({
+  apiKey: "YOUR_OPENAI_API_KEY", // Replace with your OpenAI API key
+  dangerouslyAllowBrowser: true // Only for demo purposes
+});
 
 export default function Chat() {
   const [messages, setMessages] = useState<ChatMessageProps[]>([]);
@@ -24,26 +32,37 @@ export default function Chat() {
     setIsLoading(true);
     
     try {
-      // In a real implementation, this would be an API call to GPT-4
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      // Get system prompt based on the selected mode
+      const systemPrompt = getSystemPromptForMode(mode);
       
-      // Simulate AI response based on mode
-      let aiResponse = "";
+      // Create conversation history for OpenAI
+      const conversationHistory = messages.map(msg => ({
+        role: msg.role === "assistant" ? "assistant" as const : "user" as const,
+        content: msg.content
+      }));
       
-      switch (mode) {
-        case "tutor":
-          aiResponse = `I'm your tutor assistant. You asked: "${message}"\n\nHere's a detailed explanation of this topic...`;
-          break;
-        case "writer":
-          aiResponse = `As a content writer, I'll help you with: "${message}"\n\nHere's a draft you can use...`;
-          break;
-        case "developer":
-          aiResponse = `Let me help you with your code issue: "${message}"\n\nYou might want to try this approach...`;
-          break;
-        case "support":
-          aiResponse = `Thank you for contacting support about: "${message}"\n\nI'd be happy to help resolve this issue...`;
-          break;
-      }
+      // Add the system message at the beginning
+      conversationHistory.unshift({
+        role: "system" as const,
+        content: systemPrompt
+      });
+      
+      // Add the new user message
+      conversationHistory.push({
+        role: "user" as const,
+        content: message
+      });
+      
+      // Call OpenAI API
+      const completion = await openai.chat.completions.create({
+        model: "gpt-4o", // You can use "gpt-3.5-turbo" for a more cost-effective option
+        messages: conversationHistory,
+        temperature: 0.7,
+        max_tokens: 800,
+      });
+      
+      // Extract the AI response
+      const aiResponse = completion.choices[0]?.message?.content || "I'm sorry, I couldn't generate a response.";
       
       // Add AI response to chat
       const aiMessage: ChatMessageProps = {
@@ -54,13 +73,29 @@ export default function Chat() {
       
       setMessages(prev => [...prev, aiMessage]);
     } catch (error) {
+      console.error("OpenAI API error:", error);
       toast({
         title: "Error",
-        description: "Failed to get a response. Please try again.",
+        description: "Failed to get a response from the AI. Please try again.",
         variant: "destructive"
       });
     } finally {
       setIsLoading(false);
+    }
+  };
+  
+  const getSystemPromptForMode = (mode: ChatMode): string => {
+    switch (mode) {
+      case "tutor":
+        return "You are an expert tutor assistant. Explain concepts in detail with examples. Be educational, patient, and encouraging.";
+      case "writer":
+        return "You are a professional content writer assistant. Help create engaging, well-structured content. Provide creative suggestions and refinements.";
+      case "developer":
+        return "You are an experienced developer assistant. Provide code explanations, debugging help, and programming advice with code examples when relevant.";
+      case "support":
+        return "You are a friendly customer support assistant. Be helpful, empathetic, and solution-oriented when addressing user concerns.";
+      default:
+        return "You are a helpful assistant.";
     }
   };
   

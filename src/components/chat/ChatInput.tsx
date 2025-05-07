@@ -1,5 +1,5 @@
 
-import { useState, FormEvent } from "react";
+import { useState, FormEvent, useEffect } from "react";
 import { Mic, MicOff, Send } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -12,6 +12,33 @@ interface ChatInputProps {
 export default function ChatInput({ onSend, isLoading = false }: ChatInputProps) {
   const [message, setMessage] = useState("");
   const [isRecording, setIsRecording] = useState(false);
+  const [recognition, setRecognition] = useState<SpeechRecognition | null>(null);
+  
+  // Initialize speech recognition
+  useEffect(() => {
+    if ('SpeechRecognition' in window || 'webkitSpeechRecognition' in window) {
+      const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+      const recognitionInstance = new SpeechRecognition();
+      
+      recognitionInstance.continuous = true;
+      recognitionInstance.interimResults = true;
+      
+      recognitionInstance.onresult = (event) => {
+        const transcript = Array.from(event.results)
+          .map(result => result[0])
+          .map(result => result.transcript)
+          .join('');
+          
+        setMessage(transcript);
+      };
+      
+      recognitionInstance.onend = () => {
+        setIsRecording(false);
+      };
+      
+      setRecognition(recognitionInstance);
+    }
+  }, []);
   
   const handleSubmit = (e: FormEvent) => {
     e.preventDefault();
@@ -29,16 +56,17 @@ export default function ChatInput({ onSend, isLoading = false }: ChatInputProps)
   };
   
   const toggleRecording = () => {
-    // This would be where you'd implement the actual voice recognition
-    setIsRecording(!isRecording);
+    if (!recognition) {
+      alert("Speech recognition is not supported in your browser.");
+      return;
+    }
     
-    if (!isRecording) {
-      // Simulating voice recognition for now
-      // In a real implementation, you'd use the Web Speech API
-      setTimeout(() => {
-        setMessage(prev => prev + " Voice input simulation");
-        setIsRecording(false);
-      }, 2000);
+    if (isRecording) {
+      recognition.stop();
+      setIsRecording(false);
+    } else {
+      recognition.start();
+      setIsRecording(true);
     }
   };
   
