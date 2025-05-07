@@ -62,7 +62,6 @@ export default function ChatInput({ onSend, isLoading = false }: ChatInputProps)
           placeholder="Type a message..."
           className="flex-1 resize-none border-none focus-visible:ring-0 focus-visible:ring-offset-0"
           rows={1}
-          maxRows={5}
           disabled={isLoading}
         />
         
