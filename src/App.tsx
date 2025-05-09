@@ -1,4 +1,3 @@
-
 import { BrowserRouter, Routes, Route, useLocation } from "react-router-dom";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
@@ -8,6 +7,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { ThemeProvider } from "./components/ThemeProvider";
 import Navbar from "./components/navbar/Navbar";
 import Footer from "./components/Footer";
+import ProtectedRoute from "./components/auth/ProtectedRoute";
 
 // Pages
 import Landing from "./pages/Landing";
@@ -33,7 +33,14 @@ const AppContent = () => {
           <Route path="/" element={<Landing />} />
           <Route path="/login" element={<Login />} />
           <Route path="/signup" element={<Signup />} />
-          <Route path="/chat" element={<ChatPage />} />
+          <Route 
+            path="/chat" 
+            element={
+              <ProtectedRoute>
+                <ChatPage />
+              </ProtectedRoute>
+            } 
+          />
           <Route path="/pricing" element={<Pricing />} />
           {/* Default 404 page from the template */}
           <Route path="*" element={<NotFound />} />

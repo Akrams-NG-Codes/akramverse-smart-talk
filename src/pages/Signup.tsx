@@ -5,8 +5,9 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Github } from "lucide-react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { useToast } from "@/components/ui/use-toast";
+import { supabase } from "@/integrations/supabase/client";
 
 export default function Signup() {
   const [name, setName] = useState("");
@@ -14,29 +15,83 @@ export default function Signup() {
   const [password, setPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
+  const navigate = useNavigate();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
     
     try {
-      // Simulate signup API call
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      // Sign up the user
+      const { data: authData, error: authError } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          data: {
+            full_name: name,
+          },
+        },
+      });
+
+      if (authError) throw authError;
+
+      // Create a profile for the user
+      if (authData.user) {
+        const { error: profileError } = await supabase
+          .from('profiles')
+          .insert({
+            id: authData.user.id,
+            full_name: name,
+            email: email,
+          });
+
+        if (profileError) throw profileError;
+
+        // Create user settings
+        const { error: settingsError } = await supabase
+          .from('user_settings')
+          .insert({
+            user_id: authData.user.id,
+            preferred_mode: 'tutor',
+            message_count: 0,
+          });
+
+        if (settingsError) throw settingsError;
+      }
       
       toast({
         title: "Account created!",
         description: "Please check your email to verify your account.",
       });
       
-      // In a real app, redirect after signup
-    } catch (error) {
+      navigate('/login');
+    } catch (error: any) {
       toast({
         title: "Sign-up Failed",
-        description: "There was a problem creating your account.",
+        description: error.message || "There was a problem creating your account.",
         variant: "destructive",
       });
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const handleSocialSignup = async (provider: 'github' | 'google') => {
+    try {
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider,
+        options: {
+          redirectTo: `${window.location.origin}/chat`
+        }
+      });
+
+      if (error) throw error;
+    } catch (error: any) {
+      toast({
+        title: "Sign-up Failed",
+        description: error.message || "Failed to sign up with " + provider,
+        variant: "destructive",
+      });
     }
   };
 
@@ -51,11 +106,21 @@ export default function Signup() {
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="grid grid-cols-2 gap-4">
-            <Button variant="outline" disabled={isLoading} className="w-full">
+            <Button 
+              variant="outline" 
+              disabled={isLoading} 
+              className="w-full"
+              onClick={() => handleSocialSignup('github')}
+            >
               <Github className="mr-2 h-4 w-4" />
               Github
             </Button>
-            <Button variant="outline" disabled={isLoading} className="w-full">
+            <Button 
+              variant="outline" 
+              disabled={isLoading} 
+              className="w-full"
+              onClick={() => handleSocialSignup('google')}
+            >
               <svg className="mr-2 h-4 w-4" viewBox="0 0 24 24">
                 <path
                   d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"

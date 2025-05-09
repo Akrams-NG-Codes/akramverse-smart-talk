@@ -4,37 +4,62 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Github, Mail } from "lucide-react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { useToast } from "@/components/ui/use-toast";
+import { supabase } from "@/integrations/supabase/client";
 
 export default function Login() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
+  const navigate = useNavigate();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
     
     try {
-      // Simulate login API call
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
+
+      if (error) throw error;
+
       toast({
         title: "Login Successful",
         description: "Welcome back to groupj!",
       });
       
-      // In a real app, redirect to dashboard or main page after login
-    } catch (error) {
+      navigate('/chat');
+    } catch (error: any) {
       toast({
         title: "Login Failed",
-        description: "Please check your credentials and try again.",
+        description: error.message || "Please check your credentials and try again.",
         variant: "destructive",
       });
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const handleSocialLogin = async (provider: 'github' | 'google') => {
+    try {
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider,
+        options: {
+          redirectTo: `${window.location.origin}/chat`
+        }
+      });
+
+      if (error) throw error;
+    } catch (error: any) {
+      toast({
+        title: "Login Failed",
+        description: error.message || "Failed to login with " + provider,
+        variant: "destructive",
+      });
     }
   };
 
@@ -49,11 +74,21 @@ export default function Login() {
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="grid grid-cols-2 gap-4">
-            <Button variant="outline" disabled={isLoading} className="w-full">
+            <Button 
+              variant="outline" 
+              disabled={isLoading} 
+              className="w-full"
+              onClick={() => handleSocialLogin('github')}
+            >
               <Github className="mr-2 h-4 w-4" />
               Github
             </Button>
-            <Button variant="outline" disabled={isLoading} className="w-full">
+            <Button 
+              variant="outline" 
+              disabled={isLoading} 
+              className="w-full"
+              onClick={() => handleSocialLogin('google')}
+            >
               <svg className="mr-2 h-4 w-4" viewBox="0 0 24 24">
                 <path
                   d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"

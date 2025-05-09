@@ -8,7 +8,6 @@ export default defineConfig(({ mode }) => ({
   server: {
     host: "::",
     port: 8080,
-    historyApiFallback: true,
   },
   plugins: [
     react(),
@@ -18,6 +17,16 @@ export default defineConfig(({ mode }) => ({
   resolve: {
     alias: {
       "@": path.resolve(__dirname, "./src"),
+    },
+  },
+  // Add base URL configuration
+  base: '/',
+  // Add build configuration for SPA
+  build: {
+    rollupOptions: {
+      output: {
+        manualChunks: undefined,
+      },
     },
   },
 }));
