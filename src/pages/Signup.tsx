@@ -33,7 +33,10 @@ export default function Signup() {
         },
       });
 
-      if (authError) throw authError;
+      if (authError) {
+        console.error('Auth Error:', authError);
+        throw authError;
+      }
 
       // Create a profile for the user
       if (authData.user) {
@@ -45,7 +48,10 @@ export default function Signup() {
             email: email,
           });
 
-        if (profileError) throw profileError;
+        if (profileError) {
+          console.error('Profile Error:', profileError);
+          throw profileError;
+        }
 
         // Create user settings
         const { error: settingsError } = await supabase
@@ -56,7 +62,10 @@ export default function Signup() {
             message_count: 0,
           });
 
-        if (settingsError) throw settingsError;
+        if (settingsError) {
+          console.error('Settings Error:', settingsError);
+          throw settingsError;
+        }
       }
       
       toast({
@@ -66,6 +75,7 @@ export default function Signup() {
       
       navigate('/login');
     } catch (error: any) {
+      console.error('Signup Error:', error);
       toast({
         title: "Sign-up Failed",
         description: error.message || "There was a problem creating your account.",
@@ -78,7 +88,8 @@ export default function Signup() {
 
   const handleSocialSignup = async (provider: 'github' | 'google') => {
     try {
-      const { error } = await supabase.auth.signInWithOAuth({
+      console.log('Starting social signup with:', provider);
+      const { data, error } = await supabase.auth.signInWithOAuth({
         provider,
         options: {
           redirectTo: 'https://akramverse-smart-talk.vercel.app',
@@ -88,8 +99,14 @@ export default function Signup() {
         }
       });
 
-      if (error) throw error;
+      if (error) {
+        console.error('Social Signup Error:', error);
+        throw error;
+      }
+
+      console.log('Social signup response:', data);
     } catch (error: any) {
+      console.error('Social Signup Error:', error);
       toast({
         title: "Sign-up Failed",
         description: error.message || "Failed to sign up with " + provider,
