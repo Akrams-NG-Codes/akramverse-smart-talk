@@ -81,7 +81,7 @@ export default function Signup() {
       const { error } = await supabase.auth.signInWithOAuth({
         provider,
         options: {
-          redirectTo: window.location.origin
+          redirectTo: 'https://nakuynzcpxgvrpxqistm.supabase.co/auth/v1/callback'
         }
       });
 
