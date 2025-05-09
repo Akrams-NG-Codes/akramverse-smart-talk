@@ -1,4 +1,3 @@
-
 import { Logo } from "./navbar/Logo";
 
 export default function Footer() {
@@ -61,7 +60,7 @@ export default function Footer() {
         </div>
         <div className="mt-12 border-t pt-8">
           <p className="text-sm text-muted-foreground">
-            &copy; {currentYear} AkramVerse. All rights reserved.
+            &copy; {currentYear} groupj. All rights reserved.
           </p>
         </div>
       </div>

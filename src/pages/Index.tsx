@@ -1,4 +1,3 @@
-
 import { useNavigate } from "react-router-dom";
 import { useEffect } from "react";
 
@@ -14,7 +13,7 @@ const Index = () => {
   return (
     <div className="flex items-center justify-center min-h-screen">
       <div className="text-center">
-        <h1 className="text-2xl font-bold mb-4">Loading AkramVerse...</h1>
+        <h1 className="text-2xl font-bold mb-4">Loading groupj...</h1>
         <div className="animate-pulse bg-akram-purple h-1 w-64 mx-auto rounded"></div>
       </div>
     </div>

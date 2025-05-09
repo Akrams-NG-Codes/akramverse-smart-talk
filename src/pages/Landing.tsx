@@ -1,4 +1,3 @@
-
 import { ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
@@ -15,7 +14,7 @@ export default function Landing() {
           </span>
         </h1>
         <p className="mt-6 max-w-2xl text-lg text-muted-foreground">
-          AkramVerse leverages GPT-4 to create intelligent, context-aware conversations. 
+          groupj leverages GPT-4 to create intelligent, context-aware conversations. 
           Choose from multiple chat modes tailored to your specific needs.
         </p>
         <div className="mt-10 flex gap-4">
@@ -39,7 +38,7 @@ export default function Landing() {
               <div className="w-full max-w-2xl mx-auto p-4">
                 <div className="glass-card p-6">
                   <div className="flex justify-between items-center mb-6">
-                    <div className="font-semibold">AkramVerse Chat</div>
+                    <div className="font-semibold">groupj Chat</div>
                     <div className="text-sm px-3 py-1 bg-akram-purple text-white rounded-full">Tutor Mode</div>
                   </div>
                   <div className="space-y-4">
@@ -67,7 +66,7 @@ export default function Landing() {
           <div className="text-center">
             <h2 className="text-3xl font-bold">Powerful Features</h2>
             <p className="mt-4 text-muted-foreground max-w-2xl mx-auto">
-              AkramVerse offers a wide range of features to enhance your AI chat experience
+              groupj offers a wide range of features to enhance your AI chat experience
             </p>
           </div>
 
@@ -79,7 +78,7 @@ export default function Landing() {
               },
               {
                 title: "Session Memory",
-                description: "AkramVerse remembers your conversation context for more natural interactions."
+                description: "groupj remembers your conversation context for more natural interactions."
               },
               {
                 title: "Voice Input",
@@ -91,7 +90,7 @@ export default function Landing() {
               },
               {
                 title: "Mobile Friendly",
-                description: "Access AkramVerse on any device with our responsive design."
+                description: "Access groupj on any device with our responsive design."
               },
               {
                 title: "Secure & Private",

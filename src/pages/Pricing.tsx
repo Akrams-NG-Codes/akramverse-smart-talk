@@ -1,4 +1,3 @@
-
 import { Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
@@ -113,7 +112,7 @@ export default function Pricing() {
                 a: "Yes, we offer a 14-day money-back guarantee if you're not satisfied with your subscription."
               },
               {
-                q: "Can I use AkramVerse for commercial purposes?",
+                q: "Can I use groupj for commercial purposes?",
                 a: "Yes, all plans allow for commercial usage. The Enterprise plan includes additional features for business needs."
               }
             ].map((faq, i) => (

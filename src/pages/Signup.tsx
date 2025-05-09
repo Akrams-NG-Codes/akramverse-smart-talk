@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -47,7 +46,7 @@ export default function Signup() {
         <CardHeader className="space-y-2">
           <CardTitle className="text-2xl font-bold text-center">Create an account</CardTitle>
           <CardDescription className="text-center">
-            Enter your information to get started with AkramVerse
+            Enter your information to get started with groupj
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">

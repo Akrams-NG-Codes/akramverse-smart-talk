@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -24,7 +23,7 @@ export default function Login() {
       
       toast({
         title: "Login Successful",
-        description: "Welcome back to AkramVerse!",
+        description: "Welcome back to groupj!",
       });
       
       // In a real app, redirect to dashboard or main page after login

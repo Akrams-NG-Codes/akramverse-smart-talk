@@ -1,4 +1,3 @@
-
 import { useState, useRef, useEffect } from "react";
 import ChatMessage, { ChatMessageProps } from "./ChatMessage";
 
@@ -19,7 +18,7 @@ export default function ChatHistory({ messages, isLoading }: ChatHistoryProps) {
       {messages.length === 0 ? (
         <div className="flex flex-col items-center justify-center h-full text-center">
           <div className="mb-4 text-4xl">👋</div>
-          <h3 className="text-lg font-medium">Welcome to AkramVerse</h3>
+          <h3 className="text-lg font-medium">Welcome to groupj</h3>
           <p className="text-muted-foreground max-w-md mt-2">
             Start a conversation with our AI assistant. Choose a mode above to get tailored responses.
           </p>
