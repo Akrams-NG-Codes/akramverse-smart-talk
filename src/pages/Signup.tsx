@@ -160,7 +160,7 @@ export default function Signup() {
               <Label htmlFor="name">Name</Label>
               <Input
                 id="name"
-                placeholder="John Doe"
+                placeholder="Group J"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 required
