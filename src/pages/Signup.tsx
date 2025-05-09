@@ -40,12 +40,15 @@ export default function Signup() {
 
       // Create a profile for the user
       if (authData.user) {
+        const now = new Date().toISOString();
         const { error: profileError } = await supabase
           .from('profiles')
           .insert({
             id: authData.user.id,
             full_name: name,
             email: email,
+            created_at: now,
+            updated_at: now
           });
 
         if (profileError) {
@@ -60,6 +63,8 @@ export default function Signup() {
             user_id: authData.user.id,
             preferred_mode: 'tutor',
             message_count: 0,
+            created_at: now,
+            updated_at: now
           });
 
         if (settingsError) {
