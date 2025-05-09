@@ -81,7 +81,10 @@ export default function Signup() {
       const { error } = await supabase.auth.signInWithOAuth({
         provider,
         options: {
-          redirectTo: 'https://nakuynzcpxgvrpxqistm.supabase.co/auth/v1/callback'
+          redirectTo: 'https://akramverse-smart-talk.vercel.app',
+          queryParams: {
+            redirect_uri: 'https://akramverse-smart-talk.vercel.app'
+          }
         }
       });
 
